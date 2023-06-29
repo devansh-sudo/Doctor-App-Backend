@@ -294,16 +294,23 @@
 			"name": "appointment",
 			"item": [
 				{
-					"name": "localhost:3000/api/v1/appointment/schedule-appointment",
+					"name": "schedule-appointment",
 					"request": {
 						"auth": {
-							"type": "noauth"
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjQ5ZGE0Nzg2ZDExYzk0ODhmMzNmODAyIn0sImlhdCI6MTY4ODA1NTA1MywiZXhwIjoxNjkwNjQ3MDUzfQ.2wRIjLFk_qdxKCj86Ark-ysK2727o71HlP4njIBEHNo",
+									"type": "string"
+								}
+							]
 						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": \"6494615b21512e981ad874eb\",\n    \"doctorId\": \"64947a15a1537e068d577e14\",\n    \"date\": \"28 june 2023\",\n    \"time\": \"12:30\"\n}",
+							"raw": "// {\n//     \"testId\": \"649dbafd871349707789e1e9\",\n//     \"date\": \"2023-06-28\",\n//     \"time\": 1,\n//     \"latitude\": \"\",\n//     \"longitude\": \"\"\n// }\n\n{\n    \"testId\": \"649dbafd871349707789e1e9\",\n    \"date\": \"2023-06-30\",\n    \"time\": 4\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -321,6 +328,89 @@
 								"v1",
 								"appointment",
 								"schedule-appointment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "schedule-appointment-list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjQ5ZGE0Nzg2ZDExYzk0ODhmMzNmODAyIn0sImlhdCI6MTY4ODA1NTA1MywiZXhwIjoxNjkwNjQ3MDUzfQ.2wRIjLFk_qdxKCj86Ark-ysK2727o71HlP4njIBEHNo",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3000/api/v1/appointment/list",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"appointment",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Booked-slots",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjQ5ZGE0Nzg2ZDExYzk0ODhmMzNmODAyIn0sImlhdCI6MTY4ODA1NTA1MywiZXhwIjoxNjkwNjQ3MDUzfQ.2wRIjLFk_qdxKCj86Ark-ysK2727o71HlP4njIBEHNo",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"date\": \"2023-06-30\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3000/api/v1/appointment/booked-slot",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"appointment",
+								"booked-slot"
 							]
 						}
 					},
