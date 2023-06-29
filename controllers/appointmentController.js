@@ -1,36 +1,87 @@
 //BOOK APPOINTMENT
-const userModel = require("../models/userModel");
 const appointmentModel = require("../models/appointmentModel");
-const moment = require("moment");
+const validateToken = require("../middleware/validateTokenHandler");
+const asyncHandler = require("express-async-handler");
+const {scheduleAppointmentValidation, bookedSlots} = require('../validation/appoinmentValidation');
+const {validationResult} = require("express-validator");
+const {appointmentStatus} = require('../constants/appoinmentStatus');
 
-// const bookeAppointmnetController = async (req, res) => {
-//     try {
-//       req.body.date = moment(req.body.date, "DD-MM-YYYY").toISOString();
-//       req.body.time = moment(req.body.time, "HH:mm").toISOString();
-//       req.body.status = "pending";
-//       const newAppointment = new appointmentModel(req.body);
-//       await newAppointment.save();
-//       const user = await userModel.findOne({ _id: req.body.doctorInfo.userId });
-//       user.notifcation.push({
-//         type: "New-appointment-request",
-//         message: `A nEw Appointment Request from ${req.body.userInfo.name}`,
-//         onCLickPath: "/user/appointments",
-//       });
-//       await user.save();
-//       res.status(200).send({
-//         success: true,
-//         message: "Appointment Book succesfully",
-//       });
-//     } catch (error) {
-//       console.log(error);
-//       res.status(500).send({
-//         success: false,
-//         error,
-//         message: "Error While Booking Appointment",
-//       });
-//     }
-//   };
-  
+const bookAppointmentController = [
+    validateToken, scheduleAppointmentValidation,
+    asyncHandler(async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).send({errors: errors.array()});
+            }
+
+            const {testId, date, time, latitude, longitude} = req.body;
+
+            const isAlreadyScheduled= await appointmentModel.findOne({
+                date: { $eq: new Date(date) },
+                time: { $eq: time }
+            });
+            console.log(isAlreadyScheduled);
+            if(isAlreadyScheduled){
+                return res.status(400).send({error: "This Time slot is already scheduled. Please select other Time slot.",});
+            }
+
+            const appointmentObj = {
+                user: req.user.id,
+                test: testId,
+                date: date,
+                time: time,
+                status: appointmentStatus.pending
+            }
+
+            if(latitude) appointmentObj.latitude = latitude;
+            if(longitude) appointmentObj.longitude = longitude;
+
+            const createAppointment = await appointmentModel.create(appointmentObj);
+
+            if (!createAppointment) {
+                return res.status(400).send({error: "We are having trouble schedule a Appointment. Please try again later.",});
+            }
+
+            return res.status(200).send({appointment: createAppointment});
+        } catch (error) {
+            return res.status(400).send({error: error.message || 'Error While Booking Appointment'});
+        }
+    }),
+];
+
+const bookAppointmentList = [
+    validateToken,
+    asyncHandler(async (req, res) => {
+        try {
+            const list= await appointmentModel.find({user: req.user.id}).populate('test');
+
+            return res.status(200).send({appointment: list});
+        } catch (error) {
+            return res.status(400).send({error: error.message || 'Error While getting Appointment List'});
+        }
+    }),
+];
+
+const bookedSlot = [
+    validateToken,bookedSlots,
+    asyncHandler(async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).send({errors: errors.array()});
+            }
+            const {date} = req.body;
+            const slots= await appointmentModel.find({date: { $eq: new Date(date) }}, {
+                time: 1
+            });
+            return res.status(200).send({bookedSlot: slots});
+        } catch (error) {
+            return res.status(400).send({error: error.message || 'Error While getting Appointment List'});
+        }
+    }),
+];
+
 //   // booking bookingAvailabilityController
 //   const bookingAvailabilityController = async (req, res) => {
 //     try {
@@ -68,7 +119,7 @@ const moment = require("moment");
 //       });
 //     }
 //   };
-  
+
 //   const userAppointmentsController = async (req, res) => {
 //     try {
 //       const appointments = await appointmentModel.find({
@@ -88,10 +139,10 @@ const moment = require("moment");
 //       });
 //     }
 //   };
-  
-  module.exports = {
-    bookeAppointmnetController,
-    bookingAvailabilityController,
-    userAppointmentsController,
-  };
+
+module.exports = {
+    bookAppointmentController,
+    bookAppointmentList,
+    bookedSlot
+};
   
