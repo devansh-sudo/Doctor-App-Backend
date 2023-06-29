@@ -12,6 +12,7 @@ app.use(express.json());
 app.use("/api/v1", require("./routes/userRoutes"));
 app.use("/api/v1/doctor", require("./routes/doctorRoutes"));
 app.use("/api/v1/appointment", require("./routes/appointmentRoutes"))
+app.use("/api/v1/tests", require("./routes/testsRoutes"))
 app.use(errorHandler);
 
 app.listen(port, () => {

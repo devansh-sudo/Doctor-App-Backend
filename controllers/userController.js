@@ -6,6 +6,8 @@ const textflow = require("textflow.js");
 const { body, check, validationResult } = require("express-validator");
 const validateToken = require("../middleware/validateTokenHandler");
 const authMiddleware = require("../middleware/authMiddleware");
+const {signToken} = require('../utils/jwt.functions');
+
 textflow.useKey(
   "P9Ep3DHUBB67WbSdLU4KuAfmtUBS2v48tZn5CGM0LxEh5mTWMsqNwgv6KYIme2mx"
 );
@@ -14,81 +16,80 @@ textflow.useKey(
 //@route POST /api/v1/register
 //@access public
 const registerUser = asyncHandler(async (req, res) => {
-  const { email, password, phone } = req.body;
+  try {
 
-  if (!email && !phone) {
-    res.status(400);
-    throw new Error("Either email or phone is required.");
-  }
-  if (email && !password.trim()) {
-    res.status(400);
-    throw new Error("Password is required!");
-  }
+    const { email, password, phone } = req.body;
 
-  const userAvailable = await User.findOne({ email });
-  if (userAvailable) {
-    res.status(400);
-    throw new Error("User already registered!");
-  }
-
-  let userPayload = {};
-
-  if (phone) {
-    userPayload.phoneNumber = phone;
-  } else {
-    //Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("Hashed Password: ", hashedPassword);
-
-    userPayload = {
-      email: email,
-      password: hashedPassword,
-    };
-  }
-
-  if (phone && !email) {
-    const verificationOptions = {
-      service_name: "for doctor appointment app",
-      seconds: 600,
-    };
-    const result = await textflow.sendVerificationSMS(
-      phone,
-      verificationOptions
-    );
-
-    console.log(" ----- sendVerificationSMS result ---", result);
-    if (result.status === 400) {
-      return res.status(400).send({ message: result.message });
-    } else if (!result.ok) {
-      return res.status(400).send({
-        message:
-          "We are having trouble sending otp on your number. Please try again later.",
-      });
+    if (!email && !phone) {
+      res.status(400);
+      throw new Error("Either email or phone is required.");
     }
-  }
+    if (email && !password.trim()) {
+      res.status(400);
+      throw new Error("Password is required!");
+    }
 
-  const user = await User.create(userPayload);
-  console.log(`User created ${user}`);
-  const response = { _id: user.id };
-  if (user) {
-    if (user.email) {
-      response.accessToken = jwt.sign(
-        {
-          user: {
-            id: user.id,
-          },
-        },
-        process.env.ACCESS_TOKEN_SECERT,
-        { expiresIn: "15m" }
+    const userAvailable = await User.findOne({ email });
+    if (userAvailable) {
+      res.status(400);
+      throw new Error("User already registered!");
+    }
+
+    let userPayload = {};
+
+    if (phone) {
+      userPayload.phoneNumber = phone;
+    } else {
+      //Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Hashed Password: ", hashedPassword);
+
+      userPayload = {
+        email: email,
+        password: hashedPassword,
+      };
+    }
+
+    if (phone && !email) {
+      const verificationOptions = {
+        service_name: "for doctor appointment app",
+        seconds: 600,
+      };
+      const result = await textflow.sendVerificationSMS(
+          phone,
+          verificationOptions
       );
+
+      console.log(" ----- sendVerificationSMS result ---", result);
+      if (result.status === 400) {
+        return res.status(400).send({ message: result.message });
+      } else if (!result.ok) {
+        return res.status(400).send({
+          message:
+              "We are having trouble sending otp on your number. Please try again later.",
+        });
+      }
     }
 
-    res.status(201).json(response);
-  } else {
-    res.status(400);
-    throw new Error("User data us not valid");
+    const user = await User.create(userPayload);
+    console.log(`User created ${user}`);
+    const response = { _id: user.id };
+    if (user) {
+      if (user.email) {
+        response.accessToken = signToken(user.id);
+      }
+
+      res.status(201).json(response);
+    } else {
+      res.status(400);
+      throw new Error("User data us not valid");
+    }
+    res.json({ message: "Register the user" });
+
+  }catch (e){
+    console.log(e);
+    return res.status(400).send({ error: e.message });
   }
-  res.json({ message: "Register the user" });
 });
 
 const onboardController = [
@@ -188,15 +189,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
     //compare password with hashedpassword
     if (user && (await bcrypt.compare(password, user.password))) {
-      const accessToken = jwt.sign(
-        {
-          user: {
-            id: user.id,
-          },
-        },
-        process.env.ACCESS_TOKEN_SECERT,
-        { expiresIn: "15m" }
-      );
+      const accessToken = signToken(user.id);
       console.log(`Logged In : ${user}`);
       return res.status(200).json({ accessToken });
     } else {
@@ -208,9 +201,27 @@ const loginUser = asyncHandler(async (req, res) => {
 //@desc Current user info
 //@route POST /api/v1/current
 //@access private
-const currentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(req.user);
-});
+const currentUser = [
+  validateToken,
+  asyncHandler(async (req, res) => {
+    try {
+
+      const userDoc = await User.findOne({ _id: req.user.id });
+
+      if (!userDoc) {
+        return res.status(400).send({
+          error:
+              "We are having trouble getting user info. Please try again later.",
+        });
+      }
+
+      return res.status(200).send({ user: userDoc });
+    } catch (error) {
+      // console.log(" ---- ERROR_ONBOARDING_USER ---- ", error.message);
+      return res.status(400).send({ error: error.message });
+    }
+  }),
+];
 
 //@desc Send OTP
 //@route POST /api/v1/send-otp

@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/complete-onboarding", onboardController);
 router.post("/login", loginUser);
-router.get("/get-started", validateToken, currentUser);
+router.get("/profile/me", currentUser);
 
 router.post('/send-code', sendVerificationCode);
 router.post('/verify-code', verifyCode);
