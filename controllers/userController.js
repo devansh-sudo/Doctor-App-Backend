@@ -1,8 +1,7 @@
 const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 const textflow = require("textflow.js");
-const {body, check, validationResult} = require("express-validator");
+const { validationResult} = require("express-validator");
 const validateToken = require("../middleware/validateTokenHandler");
 const {signToken} = require('../utils/jwt.functions');
 const {
