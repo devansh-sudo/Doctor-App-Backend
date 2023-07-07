@@ -7,7 +7,7 @@ const signToken = (userId) =>{
             },
         },
         process.env.ACCESS_TOKEN_SECERT,
-        { expiresIn: "30 days" }
+        { expiresIn: "45 days" }
     );
 }
 
