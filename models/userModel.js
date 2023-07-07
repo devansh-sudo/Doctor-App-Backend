@@ -10,7 +10,6 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      unique: [true, "Email address already taken"],
     },
     password: {
       type: String,
@@ -20,6 +19,7 @@ const userSchema = mongoose.Schema(
     },
     phone: {
       type: String,
+      unique: [true, "Phone is already taken"],
     },
     gender: {
       type: String,
