@@ -27,14 +27,14 @@ const registerUser = [registerUserValidation, asyncHandler(async (req, res) => {
 
         const {phone} = req.body;
 
-        const userAvailable = await User.findOne({phoneNumber: phone});
+        const userAvailable = await User.findOne({phone: phone});
         if (userAvailable) {
             res.status(400);
             throw new Error("User already registered!");
         }
 
         let userPayload = {
-            phoneNumber: phone
+            phone: phone
         };
 
         // const verificationOptions = {
@@ -119,7 +119,7 @@ const loginUser = [loginUserValidation, asyncHandler(async (req, res) => {
     }
 
     const {phone} = req.body;
-    const user = await User.findOne({phoneNumber: phone});
+    const user = await User.findOne({phone: phone});
 
     if (!user) {
         return res.status(400).send({error: "Phone number is not registered."});
@@ -178,7 +178,7 @@ const sendVerificationCode = [sendVerificationCodeValidation, async (req, res) =
 
         const {phone} = req.body;
 
-        const userAvailable = await User.findOne({phoneNumber: phone});
+        const userAvailable = await User.findOne({phone: phone});
         if (!userAvailable) {
             res.status(400);
             throw new Error(`${phone} is not registered user!`);
@@ -211,7 +211,7 @@ const verifyCode = [VerifyVerificationCodeValidation, async (req, res) => {
 
     const {phone, code} = req.body;
 
-    const user = await User.findOne({phoneNumber: phone});
+    const user = await User.findOne({phone: phone});
 
     if (!user) {
         return res.status(400).send({error: "Phone number is not registered."});
