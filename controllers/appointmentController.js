@@ -15,15 +15,16 @@ const bookAppointmentController = [
                 return res.status(400).send({errors: errors.array()});
             }
 
-            const {testId, date, time, latitude, longitude} = req.body;
+            const {testId, date, time} = req.body;
 
             const isAlreadyScheduled= await appointmentModel.findOne({
                 date: { $eq: new Date(date) },
-                time: { $eq: time }
+                time: { $eq: time },
+                user: req.user.id
             });
             console.log(isAlreadyScheduled);
             if(isAlreadyScheduled){
-                return res.status(400).send({error: "This Time slot is already scheduled. Please select other Time slot.",});
+                return res.status(400).send({error: "This Time slot is already scheduled by you. Please select other Time slot.",});
             }
 
             const appointmentObj = {
@@ -33,9 +34,6 @@ const bookAppointmentController = [
                 time: time,
                 status: appointmentStatus.pending
             }
-
-            if(latitude) appointmentObj.latitude = latitude;
-            if(longitude) appointmentObj.longitude = longitude;
 
             const createAppointment = await appointmentModel.create(appointmentObj);
 
@@ -72,7 +70,8 @@ const bookedSlot = [
                 return res.status(400).send({errors: errors.array()});
             }
             const {date} = req.body;
-            const slots= await appointmentModel.find({date: { $eq: new Date(date) }}, {
+            console.log(new Date(date))
+            const slots= await appointmentModel.find({date: { $eq: new Date(date) }, user: req.user.id}, {
                 time: 1
             });
             return res.status(200).send({bookedSlot: slots});

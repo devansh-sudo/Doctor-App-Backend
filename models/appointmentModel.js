@@ -19,12 +19,6 @@ const appointmentSchema = new mongoose.Schema({
         type: Number,
         required: 'Appointment Time is Required Field'
     },
-    latitude:{
-        type: String,
-    },
-    longitude:{
-        type: String,
-    },
     status:{
         type: String,
         enum: appointmentStatusArray,
