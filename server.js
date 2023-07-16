@@ -16,5 +16,5 @@ app.use("/api/v1/tests", require("./routes/testsRoutes"))
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
