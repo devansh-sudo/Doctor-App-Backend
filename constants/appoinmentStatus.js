@@ -1,7 +1,7 @@
 const appointmentStatus = {
     pending: 'pending',
     progress: 'progress',
-    completed: 'completed'
+    completed: 'completed',
 }
 
 const appointmentStatusArray = Object.keys(appointmentStatus);

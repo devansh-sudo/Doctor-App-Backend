@@ -1,10 +1,13 @@
 //BOOK APPOINTMENT
 const appointmentModel = require("../models/appointmentModel");
+const testModel = require("../models/TestModel");
+const userModel = require("../models/userModel");
 const validateToken = require("../middleware/validateTokenHandler");
 const asyncHandler = require("express-async-handler");
 const {scheduleAppointmentValidation, bookedSlots} = require('../validation/appoinmentValidation');
 const {validationResult} = require("express-validator");
 const {appointmentStatus} = require('../constants/appoinmentStatus');
+const cashFreePayment = require("../utils/cashfree.functions");
 
 const bookAppointmentController = [
     validateToken, scheduleAppointmentValidation,
@@ -27,6 +30,18 @@ const bookAppointmentController = [
                 return res.status(400).send({error: "This Time slot is already scheduled by you. Please select other Time slot.",});
             }
 
+            const user = await userModel.findById(req.user.id);
+
+            if (!user) {
+                return res.status(400).send({error: "Invalid UserID. please send valid UserId"});
+            }
+
+            const test = await testModel.findById(testId);
+
+            if (!test) {
+                return res.status(400).send({error: "Invalid TestId. please send valid TestId",});
+            }
+
             const appointmentObj = {
                 user: req.user.id,
                 test: testId,
@@ -37,9 +52,44 @@ const bookAppointmentController = [
 
             const createAppointment = await appointmentModel.create(appointmentObj);
 
+
             if (!createAppointment) {
                 return res.status(400).send({error: "We are having trouble schedule a Appointment. Please try again later.",});
             }
+
+            const order = await cashFreePayment.createOrder({
+                    customerId: req.user.id,
+                    email: user.email,
+                    name: `${user.firstname} ${user.lastname}`,
+                    phone: user.phone
+                },
+                {
+                    orderId: createAppointment._id.toString(),
+                    orderAmount: test.price
+                });
+
+            const updateAppointment = await appointmentModel.findOneAndUpdate(
+                {_id: createAppointment._id.toString()},
+                {
+                    $set: {
+                        cashFree: order.cfOrder,
+                        order_details: {
+                            cf_order_id: order.cfOrder.cfOrderId,
+                            payment_session_id: order.cfOrder.paymentSessionId,
+                            order_status: order.cfOrder.orderStatus
+                        }
+                    },
+                },
+                {new: true,}
+            )
+
+            if (!updateAppointment) {
+                return res.status(400).send({
+                    error: "We are having trouble process payment.",
+                });
+            }
+
+            console.log(order);
 
             return res.status(200).send({appointment: createAppointment});
         } catch (error) {
@@ -52,7 +102,7 @@ const bookAppointmentList = [
     validateToken,
     asyncHandler(async (req, res) => {
         try {
-            const list= await appointmentModel.find({user: req.user.id}).populate('test');
+            const list = await appointmentModel.find({user: req.user.id}).populate('test');
 
             return res.status(200).send({appointment: list});
         } catch (error) {
@@ -62,7 +112,7 @@ const bookAppointmentList = [
 ];
 
 const bookedSlot = [
-    validateToken,bookedSlots,
+    validateToken, bookedSlots,
     asyncHandler(async (req, res) => {
         try {
             const errors = validationResult(req);
@@ -144,4 +194,3 @@ module.exports = {
     bookAppointmentList,
     bookedSlot
 };
-  

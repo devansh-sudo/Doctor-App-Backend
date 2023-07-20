@@ -23,6 +23,15 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         enum: appointmentStatusArray,
         required: 'Appointment Status is Required Field'
+    },
+    cashFree: {
+        type: Object
+    },
+    order_details: {
+        cf_order_id: {type: String},
+        payment_session_id: {type: String},
+        order_token: {type: String},
+        order_status: {type: String}
     }
 });
 
