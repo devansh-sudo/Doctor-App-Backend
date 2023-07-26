@@ -4,6 +4,8 @@ const textflow = require("textflow.js");
 const { validationResult} = require("express-validator");
 const validateToken = require("../middleware/validateTokenHandler");
 const {signToken} = require('../utils/jwt.functions');
+const path = require('path');
+
 const {
     onboardValidation,
     registerUserValidation,
@@ -11,6 +13,11 @@ const {
     sendVerificationCodeValidation,
     VerifyVerificationCodeValidation
 } = require('../validation/userValidation');
+const {bookedSlots} = require("../validation/appoinmentValidation");
+const appointmentModel = require("../models/appointmentModel");
+
+const multer  = require('multer')
+const {bucket} = require("../firebase/firebase");
 
 textflow.useKey(
     "P9Ep3DHUBB67WbSdLU4KuAfmtUBS2v48tZn5CGM0LxEh5mTWMsqNwgv6KYIme2mx"
@@ -265,6 +272,74 @@ const userProfile = async (req, res, next) => {
     }
 };
 
+
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, 'uploads/');
+        },
+        filename: function (req, file, cb) {
+            cb(null, file.originalname);
+        }
+    }),
+    fileFilter: function (req, file, cb) {
+        const filetypes = /jpeg|jpg|png/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Only images are allowed.'));
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5 MB
+    },
+});
+
+const photoUpload = [
+    validateToken, upload.single('photo'),
+    asyncHandler(async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Please upload a file.' });
+            }
+
+            const userDoc = await User.findOne({_id: req.user.id});
+            if (!userDoc) {
+                return res.status(400).send({error: "No User is Available with this UserId"});
+            }
+
+            const file = req.file;
+
+            const destination = 'users'; // Replace with the destination path in Firebase Storage where you want to store the file
+            const fileName = `${req.user.id}-${file.originalname}`;
+
+            const fileUpload = bucket.file(`${destination}/${fileName}`);
+            const blobStream = fileUpload.createWriteStream();
+
+            blobStream.on('error', (err) => {
+                console.error('Error uploading the file:', err);
+                return res.status(400).json({ error: 'Failed to upload the file.' });
+            });
+
+            blobStream.on('finish', async () => {
+                // const [url] = await fileUpload.getSignedUrl({
+                //     action: 'read',
+                //
+                // });
+                const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}/${fileName}`;
+                return res.status(200).json({message: 'User Profile successfully updated.',publicUrl});
+            });
+
+            blobStream.end(file.buffer);
+
+        } catch (error) {
+            return res.status(400).send({error: error.message || 'Error While updating Profile Image'});
+        }
+    }),
+];
+
 module.exports = {
     registerUser,
     loginUser,
@@ -273,4 +348,5 @@ module.exports = {
     verifyCode,
     userProfile,
     onboardController,
+    photoUpload
 };
