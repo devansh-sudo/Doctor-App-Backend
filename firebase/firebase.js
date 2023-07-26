@@ -1,5 +1,5 @@
 const { initializeApp, cert } = require('firebase-admin/app');
-const { getStorage } = require('firebase-admin/storage');
+const { getStorage, getDownloadURL } = require('firebase-admin/storage');
 
 const serviceAccount = require("./serviceAccountKey.json");
 
@@ -10,6 +10,6 @@ initializeApp({
 
 const bucket = getStorage().bucket();
 
-module.exports = {bucket};
+module.exports = {bucket, getDownloadURL};
 
 

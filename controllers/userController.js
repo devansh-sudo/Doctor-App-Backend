@@ -17,7 +17,7 @@ const {bookedSlots} = require("../validation/appoinmentValidation");
 const appointmentModel = require("../models/appointmentModel");
 
 const multer  = require('multer')
-const {bucket} = require("../firebase/firebase");
+const {bucket,getDownloadURL} = require("../firebase/firebase");
 
 textflow.useKey(
     "P9Ep3DHUBB67WbSdLU4KuAfmtUBS2v48tZn5CGM0LxEh5mTWMsqNwgv6KYIme2mx"
@@ -274,14 +274,7 @@ const userProfile = async (req, res, next) => {
 
 
 const upload = multer({
-    storage: multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, 'uploads/');
-        },
-        filename: function (req, file, cb) {
-            cb(null, file.originalname);
-        }
-    }),
+    storage: multer.memoryStorage(),
     fileFilter: function (req, file, cb) {
         const filetypes = /jpeg|jpg|png/;
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -295,10 +288,19 @@ const upload = multer({
     limits: {
         fileSize: 5 * 1024 * 1024, // 5 MB
     },
-});
+}).single('photo');
 
 const photoUpload = [
-    validateToken, upload.single('photo'),
+    validateToken, function (req, res, next) {
+        upload(req, res, function (err) {
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({error: err.message ||'something went wrong on file upload'});
+            } else if (err) {
+                return res.status(400).json({error: 'Please upload a file.', err});
+            }
+            next();
+        })
+    },
     asyncHandler(async (req, res) => {
         try {
             if (!req.file) {
@@ -312,29 +314,26 @@ const photoUpload = [
 
             const file = req.file;
 
-            const destination = 'users'; // Replace with the destination path in Firebase Storage where you want to store the file
+            const destination = 'users';
             const fileName = `${req.user.id}-${file.originalname}`;
 
-            const fileUpload = bucket.file(`${destination}/${fileName}`);
-            const blobStream = fileUpload.createWriteStream();
+            const blob = bucket.file(`${destination}/${fileName}`);
+            const blobStream = blob.createWriteStream();
 
             blobStream.on('error', (err) => {
-                console.error('Error uploading the file:', err);
                 return res.status(400).json({ error: 'Failed to upload the file.' });
             });
 
             blobStream.on('finish', async () => {
-                // const [url] = await fileUpload.getSignedUrl({
-                //     action: 'read',
-                //
-                // });
-                const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}/${fileName}`;
-                return res.status(200).json({message: 'User Profile successfully updated.',publicUrl});
+
+                const downloadURL= await getDownloadURL(blob);
+                userDoc.image= downloadURL;
+                await userDoc.save();
+                return res.status(200).json({user: userDoc});
             });
-
             blobStream.end(file.buffer);
-
         } catch (error) {
+            console.log(error);
             return res.status(400).send({error: error.message || 'Error While updating Profile Image'});
         }
     }),
