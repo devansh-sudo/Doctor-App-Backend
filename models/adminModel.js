@@ -28,9 +28,6 @@ const adminSchema = mongoose.Schema(
         fcm_token:{
             type : String
         },
-        token:{
-            type : String
-        }
     },
     {
         timestamps: true, versionKey: false

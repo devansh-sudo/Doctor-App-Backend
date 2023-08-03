@@ -23,6 +23,15 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         enum: appointmentStatusArray,
         required: 'Appointment Status is Required Field'
+    },
+    report:{
+        type : String
+    },
+    registrationFees:{
+        type : Number
+    },
+    content:{
+        type : String
     }
 });
 
