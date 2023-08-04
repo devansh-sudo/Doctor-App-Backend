@@ -149,7 +149,10 @@ const appointmentList = [
                         time: 1,
                     },
                 },
-                {
+                { // NOTE:  This approach seems unapporopriate. Date match should happen on 
+                // step that way we will be able to filter out some unncessary records
+                // if name is passed from frontend side then only another match stage should
+                // be added here
                     $match: matchQuery,
                 },
                 {
@@ -372,7 +375,18 @@ const appointmentShow = [
                     $project: {
                         image: '$user.image',
                         name: '$user.firstname',
-                        age: '$user.dob',
+                        // NOTE: Age should be calculated here
+                        // age: '$user.dob',
+                        age: {
+                            $round: {
+                                $divide: [
+                              {
+                                $subtract: [new Date(), "$user.dob"]
+                              },
+                              31536000000 // The number of milliseconds in a year (365 * 24 * 60 * 60 * 1000)
+                            ]
+                        }
+                        },
                         gender: '$user.gender',
                         diagnosis: '$test.testName',
                         price : "$test.price",
@@ -459,7 +473,9 @@ const removeReport = [asyncHandler(async(req, res)=>{
             removeReport.report = "";
             await removeReport.save()
         }
-        res.status(400).send("Report removed successfully")
+        //  NOTE: Status should be 200 not 400
+        // res.status(400).send("Report removed successfully")
+        res.status(200).send("Report removed successfully")
 
     } catch (e) {
         res.status(400).send(e)
