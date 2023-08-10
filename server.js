@@ -9,7 +9,7 @@ const cors = require('cors');
 connectDb();
 const app = express();
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 app.use(express.static('public'))
 app.use(express.urlencoded({extended: true, limit: '3mb'}))
 
