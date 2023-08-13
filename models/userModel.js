@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 
+const secretsSchema = mongoose.Schema({
+    stripeCustomerId: String,
+})
+
 const userSchema = mongoose.Schema(
     {
         firstname: {
@@ -35,6 +39,9 @@ const userSchema = mongoose.Schema(
         },
         image: {
             type: String,
+        },
+        secrets: {
+            type: secretsSchema
         }
     },
     {

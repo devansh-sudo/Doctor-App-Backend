@@ -32,6 +32,9 @@ const appointmentSchema = new mongoose.Schema({
     },
     content:{
         type : String
+    },
+    paymentIntent: {
+        type: String,
     }
 });
 
