@@ -11,12 +11,12 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 let options = {}
-if(process.env.MODE === "PROD"){
-    options = {
-        cert: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/fullchain.pem'),
-        key: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/privkey.pem')
-    };
-}
+// if(process.env.MODE === "PROD"){
+//     options = {
+//         cert: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/fullchain.pem'),
+//         key: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/privkey.pem')
+//     };
+// }
 
 app.use((req, res, next) => {
 if (req.path !== '/api/v1/payment/webhook') {
@@ -42,7 +42,7 @@ app.use("/api/v1/payment", require("./routes/paymentRoutes"))
 app.use("/api/v1/tests", require("./routes/testsRoutes"))
 app.use(errorHandler);
 
-const server = https.createServer(options, app); // Assuming 'app' is your Express app
+const server = https.createServer(app); // Assuming 'app' is your Express app
 server.listen(port, () => {
     console.log(`Server is running on port ${port} over HTTPS`);
 });
