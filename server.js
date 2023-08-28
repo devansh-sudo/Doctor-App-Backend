@@ -11,12 +11,12 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 let options = {}
-if(process.env.MODE === "PROD"){
-    options = {
-        cert: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/fullchain.pem'),
-        key: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/privkey.pem')
-    };
-}
+// if(process.env.MODE === "PROD"){
+//     options = {
+//         cert: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/fullchain.pem'),
+//         key: fs.readFileSync('/etc/letsencrypt/live/supremebackoffice.in/privkey.pem')
+//     };
+// }
 
 app.use((req, res, next) => {
 if (req.path !== '/api/v1/payment/webhook') {
